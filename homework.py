@@ -53,8 +53,8 @@ def get_api_answer(timestamp):
     except requests.ConnectionError:
         logging.error('Подключение к Интернету отсутствует')
         raise ConnectionError('Подключение к Интернету отсутствует')
-    except requests.exceptions.RequestException as error: 
-        logging.error(f'Эндпоинт недоступен.Ошибка от сервера: {error}') 
+    except requests.exceptions.RequestException as error:
+        logging.error(f'Эндпоинт недоступен.Ошибка от сервера: {error}')
         send_message(f'Эндпоинт недоступен. Ошибка от сервера: {error}')
     if response.status_code != HTTPStatus.OK:
         logging.error(f'Код ответа не 200: {response.status_code}')
@@ -88,12 +88,13 @@ def parse_status(homework):
     homework_status = homework.get('status')
     if homework_status not in HOMEWORK_VERDICTS:
         raise ValueError(f'Неизвестный статус работы - {homework_status}')
-    return( 
+    return(
         'Изменился статус проверки работы "{homework_name}" {verdict}'
     ).format(
         homework_name=homework_name,
         verdict=HOMEWORK_VERDICTS[homework_status]
     )
+
 
 def main():
     """Основная логика работы бота."""
