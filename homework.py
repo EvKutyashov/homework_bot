@@ -37,38 +37,34 @@ def check_tokens():
 def send_message(bot, message):
     """Отправляет сообщение в Telegram чат."""
     try:
-        logging.debug('Бот отправляет сообщение в телеграм.%s', message)
         bot.send_message(TELEGRAM_CHAT_ID, message)
     except telegram.error.TelegramError as error:
         logging.error(f'Не удалось отправить сообщение в telegram: {error}')
         raise Exception(error)
     else:
-        logging.info('Сообщение в телеграм успешно отправлено.')
+        logging.debug('Сообщение в телеграм успешно отправлено.')
 
 
 def get_api_answer(timestamp):
     """Запрос к эндпоинту API-сервиса."""
     params = {'from_date': timestamp}
     try:
-        logging.debug('Попытка отправки запроса к эндпоинту API-сервиса')
         response = requests.get(ENDPOINT, headers=HEADERS, params=params)
-        logging.debug('Отправлен запрос к эндпоинту API-сервиса')
     except requests.ConnectionError:
         logging.error('Подключение к Интернету отсутствует')
         raise ConnectionError('Подключение к Интернету отсутствует')
-    except Exception as error:
-        logging.error(f'Эндпоинт недоступен.Ошибка от сервера: {error}')
+    except requests.exceptions.RequestException as error: 
+        logging.error(f'Эндпоинт недоступен.Ошибка от сервера: {error}') 
         send_message(f'Эндпоинт недоступен. Ошибка от сервера: {error}')
     if response.status_code != HTTPStatus.OK:
         logging.error(f'Код ответа не 200: {response.status_code}')
         raise requests.exceptions.RequestException(
-            f'Код ответа не 200: {response.status_cod}'
+            f'Код ответа не 200: {response.status_code}'
         )
     try:
         return response.json()
     except json.JSONDecodeError:
         logging.error('Сервер вернул невалидный ответ')
-        send_message('Сервер вернул невалидный ответ')
 
 
 def check_response(response):
@@ -92,13 +88,12 @@ def parse_status(homework):
     homework_status = homework.get('status')
     if homework_status not in HOMEWORK_VERDICTS:
         raise ValueError(f'Неизвестный статус работы - {homework_status}')
-    return(
+    return( 
         'Изменился статус проверки работы "{homework_name}" {verdict}'
     ).format(
         homework_name=homework_name,
         verdict=HOMEWORK_VERDICTS[homework_status]
     )
-
 
 def main():
     """Основная логика работы бота."""
@@ -126,12 +121,10 @@ def main():
                     message = parse_status(homework)
                     send_message(bot, message)
             current_timestamp = int(time.time())
-            time.sleep(RETRY_PERIOD)
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logging.error(message)
-            time.sleep(RETRY_PERIOD)
-        else:
+        finally:
             time.sleep(RETRY_PERIOD)
 
 
@@ -139,6 +132,7 @@ if __name__ == '__main__':
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s, %(levelname)s, %(message)s',
-        filename='program.log'
+        filename='program.log',
+        encoding='utf-8'
     )
     main()
